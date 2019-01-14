@@ -1,1 +1,1 @@
-from .sltcls import SLTCls
+from .sltcls import SLT
