@@ -14,7 +14,7 @@ import language_check
 from sklearn.cluster import KMeans
 
 
-class SLTCls:
+class SLT:
     """Classify short/long text to the predefined categories using clustering-based enrichment."""
     def __init__(self, x, y, vocabulary, **kwargs):
         """Initialize the object with training dataset and setting.
