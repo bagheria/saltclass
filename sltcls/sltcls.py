@@ -17,14 +17,14 @@ from sklearn.cluster import KMeans
 class SLT:
     """Classify short/long text to the predefined categories using clustering-based enrichment."""
     def __init__(self, x, y, vocabulary, **kwargs):
-        """Initialize the object with training dataset and setting.
+        """Initialize the object with training matrix and setting.
         :param x: Data for training, a numerical document-term matrix
         :type x: list
         :param y: Target binary values
         :type y: list
         :param vocabulary: Name of variables in x
         :type vocabulary: list
-        :param kwargs: Arbitrary keyword arguments: classifier='SVM', language='nl', vectorizer='count'
+        :param kwargs: Arbitrary keyword arguments: language='nl', vectorizer='count'
         :type kwargs: str
         """
         self.X = x   # train data
@@ -46,6 +46,12 @@ class SLT:
 
     @classmethod
     def from_data_dir(cls, **kwargs):
+        """Initialize the object from a directory of text files.
+        :param kwargs: Arbitrary keyword arguments: language='nl', vectorizer='count'
+        :type kwargs: str
+        :return: Object
+        :rtype: SLT
+        """
         if kwargs is not None and 'vectorizer' in kwargs:
             vectorizer = kwargs['vectorizer']
         else:
@@ -63,6 +69,12 @@ class SLT:
         return stclassifier_object
 
     def train(self, **kwargs):
+        """Train classifier.
+        :param kwargs: Arbitrary keyword arguments: classifier='SVM', kernel='lin', degree=2, gamma=2
+        :type kwargs: str, int
+        :return: Object
+        :rtype: SLT
+        """
         if kwargs is not None and 'classifier' in kwargs:
             if kwargs['classifier'] == 'SVM':
                 if 'kernel' in kwargs:
@@ -84,16 +96,29 @@ class SLT:
         self.clf.fit(self.X, self.y)
 
     def print_info(self):
+        """Print object's information."""
         print("classifier=", self.clf)
         print("language=", self.language)
         print("vectorizer=", self.vectorizer)
 
     def test(self, test_dir, test_out_dir=None):
+        """Predict categories of test data.
+        :param test_dir: Directory for test data
+        :type test_dir: str
+        :param test_out_dir: Directory for output
+        :type test_out_dir: str
+        """
         for filename in os.listdir(test_dir):
             self.prediction = self.predict(test_dir + filename)
             print(filename, "-------->", self.prediction)
 
     def predict(self, data_file):
+        """Predict category for a text file.
+        :param data_file: A text file
+        :type data_file: str
+        :return: Prediction
+        :rtype: str
+        """
         f = open(data_file, "r")
         self.newdata = [f.read()]
         self.prepare_data()
@@ -101,6 +126,7 @@ class SLT:
         return self.prediction
 
     def prepare_data(self):
+        """Transform the data with vectorizer."""
         if self.vectorizer == 'count':
             # can change to 'vocabulary=pickle.load(open("feature.pkl", "rb"))'
             vec = CountVectorizer(vocabulary=self.vocabulary)
@@ -115,12 +141,14 @@ class SLT:
     #     print()
 
     def binarize_y(self):
+        """Make target binary."""
         # improve: can extract unique values of y to binarize based on
         value = self.y[0]
         binary_y = [1 if i == value else 0 for i in self.y]
         self.y = binary_y
 
     def plot_roc_curve(self):
+        """Plot roc curves for cv."""
         tprs = []
         aucs = []
         mean_fpr = np.linspace(0, 1, 100)
@@ -165,6 +193,10 @@ class SLT:
         plt.show()
 
     def kmeans_enrich(self, num_clusters=10):
+        """Enrich the training set with kmeans algorithm.
+        :param num_clusters: Number of clusters
+        :type num_clusters: int
+        """
         km = KMeans(n_clusters=num_clusters, init='k-means++', max_iter=300, n_init=1, verbose=0, random_state=3425)
         km.fit(self.X)
 
@@ -188,12 +220,23 @@ class SLT:
 
 
 class Text:
+    """Text as content and category."""
     def __init__(self, content, category):
         self.content = content
         self.category = category
 
 
 def initialize_dataset(train_path, word_vectorizer, language='nl'):
+    """Read documents from train data and vectorize the data.
+    :param train_path: Directory for train data
+    :type train_path: str
+    :param word_vectorizer: Feature vectorizer
+    :type word_vectorizer: str
+    :param language: Language of text
+    :type language: str
+    :return: Transformed matrix, List of categories, and Vocabulary of data
+    :rtype: list
+    """
     categories = os.listdir(train_path)
     docs = []
     for i in range(categories.__len__()):
@@ -223,6 +266,14 @@ def initialize_dataset(train_path, word_vectorizer, language='nl'):
 
 
 def spell_correction(X, language):
+    """Spell correction for the selected language.
+    :param X: Matrix of raw documents
+    :type X: list
+    :param language: Language of text
+    :type language: str
+    :return: Spell-corrected data
+    :rtype: list
+    """
     tool = language_check.LanguageTool(language)
     print("Spell correction: ")
     for i in tqdm(range(X.__len__())):
@@ -233,13 +284,11 @@ def spell_correction(X, language):
 
 
 def detect_negation_scope(X, language):
-    """Do the Negation Detection for the text
-
-    Parameters
-    ----------
-    X : the train data.
-
-    Returns
-    -------
-    X : object
+    """Spell correction for the selected language.
+    :param X: Matrix of raw documents
+    :type X: list
+    :param language: Language of text
+    :type language: str
+    :return:
+    :rtype:
     """
