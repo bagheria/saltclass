@@ -1,17 +1,17 @@
-from sklearn.svm import SVC
-from sklearn.naive_bayes import MultinomialNB
-import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
-import os
-import numpy as np
-from sklearn.metrics import roc_curve, auc
-from scipy import interp
-import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedKFold
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import roc_curve, auc
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+from sklearn.svm import SVC
+from scipy import interp
 from tqdm import tqdm
 import language_check
-from sklearn.cluster import KMeans
+import pandas as pd
+import numpy as np
+import os
 
 
 class SLT:
