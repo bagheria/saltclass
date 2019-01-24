@@ -192,12 +192,18 @@ class SLT:
         plt.legend(loc="lower right")
         plt.show()
 
-    def kmeans_enrich(self, num_clusters=10):
+    def enrich(self, method=None, num_clusters=3):
+        if method == 'kmeans':
+            self.kmeans_enrich(numclusters=num_clusters)
+        else:
+            self.kmeans_enrich(numclusters=num_clusters)
+
+    def kmeans_enrich(self, numclusters=10):
         """Enrich the training set with kmeans algorithm.
         :param num_clusters: Number of clusters
         :type num_clusters: int
         """
-        km = KMeans(n_clusters=num_clusters, init='k-means++', max_iter=300, n_init=1, verbose=0, random_state=3425)
+        km = KMeans(n_clusters=numclusters, init='k-means++', max_iter=300, n_init=1, verbose=0, random_state=3425)
         km.fit(self.X)
 
         if self.vectorizer == 'count':
