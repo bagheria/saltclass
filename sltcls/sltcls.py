@@ -2,6 +2,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import roc_curve, auc
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
@@ -45,7 +46,7 @@ class SLT:
         self.vocabulary = vocabulary
 
     @classmethod
-    def from_data_dir(cls, **kwargs):
+    def data_from_dir(cls, **kwargs):
         """Initialize the object from a directory of text files.
         :param kwargs: Arbitrary keyword arguments: language='nl', vectorizer='count'
         :type kwargs: str
@@ -203,13 +204,9 @@ class SLT:
         :param num_clusters: Number of clusters
         :type num_clusters: int
         """
+
         km = KMeans(n_clusters=numclusters, init='k-means++', max_iter=300, n_init=1, verbose=0, random_state=3425)
         km.fit(self.X)
-
-        if self.vectorizer == 'count':
-            vec = CountVectorizer(vocabulary=self.vocabulary)
-        else:
-            vec = TfidfVectorizer(vocabulary=self.vocabulary)
 
         n_features = self.vocabulary.__len__()
         # feature_names = vec.get_feature_names() # self.vocabulary
@@ -220,6 +217,27 @@ class SLT:
 
             x_label = km.labels_[x]
             center_vector = km.cluster_centers_[x_label]
+
+            for i in range(n_features):  # (for each word in the cluster center)
+                self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
+
+    def mbk_enrich(self, numclusters=10):
+        """Enrich the training set with MiniBatchKMeans clustering algorithm.
+        :param num_clusters: Number of clusters
+        :type num_clusters: int
+        """
+
+        mbk = MiniBatchKMeans(init='k-means++', n_clusters=numclusters, batch_size=100,
+                              n_init=10, max_no_improvement=10, verbose=0,
+                              random_state=0)
+        mbk.fit(self.X)
+        n_features = self.vocabulary.__len__()
+        for x in range(self.X.__len__()):
+            # check gamma, influence of length
+            gamma = np.count_nonzero(x) / n_features
+
+            x_label = mbk.labels_[x]
+            center_vector = mbk.cluster_centers_[x_label]
 
             for i in range(n_features):  # (for each word in the cluster center)
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
