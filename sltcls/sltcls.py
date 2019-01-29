@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans
 from sklearn.cluster import Birch
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
+from sklearn import mixture
 from scipy import interp
 from tqdm import tqdm
 import language_check
@@ -228,17 +229,19 @@ class SLT:
                               n_init=10, max_no_improvement=10, verbose=0,
                               random_state=0)
         mbk.fit(self.X)
+        labels = mbk.labels_
+        cluster_centers = mbk.cluster_centers_
         n_features = self.vocabulary.__len__()
         for x in range(self.X.__len__()):
             # check gamma, influence of length
             gamma = np.count_nonzero(x) / n_features
-            x_label = mbk.labels_[x]
-            center_vector = mbk.cluster_centers_[x_label]
+            x_label = labels[x]
+            center_vector = cluster_centers[x_label]
             for i in range(n_features):  # (for each word in the cluster center)
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
     def birch_enrich(self, numclusters=10, threshold=1.7):
-        """Enrich the training set with MiniBatchKMeans clustering algorithm.
+        """Enrich the training set with BIRCH clustering algorithm.
         BIRCH (balanced iterative reducing and clustering using hierarchies) is an unsupervised data mining algorithm
         used to perform hierarchical clustering over particularly large data-sets. An advantage of BIRCH is its ability
         to incrementally and dynamically cluster incoming, multi-dimensional metric data points in an attempt to produce
@@ -252,14 +255,35 @@ class SLT:
         """
         birch = Birch(threshold=threshold, n_clusters=numclusters)
         birch.fit(self.X)
+        labels = birch.labels_
+        cluster_centers = birch.subcluster_centers_
         n_features = self.vocabulary.__len__()
         for x in range(self.X.__len__()):
             # check gamma, influence of length
             gamma = np.count_nonzero(x) / n_features
-            x_label = birch.labels_[x]
-            center_vector = birch.cluster_centers_[x_label]
+            x_label = labels[x]
+            center_vector = cluster_centers[x_label]
             for i in range(n_features):  # (for each word in the cluster center)
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
+
+    def gmm_enrich(self, numclusters=10):
+        """Enrich the training set with Gaussian Mixture Modeling clustering algorithm.
+        :param numclusters: Number of clusters
+        :type numclusters: int
+        """
+        gmm = mixture.GaussianMixture(n_components=numclusters, covariance_type='full')
+        gmm.fit(self.X)
+        labels = gmm.predict(self.X)
+        cluster_centers = gmm.means_
+        n_features = self.vocabulary.__len__()
+        for x in range(self.X.__len__()):
+            # check gamma, influence of length
+            gamma = np.count_nonzero(x) / n_features
+            x_label = labels[x]
+            center_vector = cluster_centers[x_label]
+            for i in range(n_features):  # (for each word in the cluster center)
+                self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
+
 
 
 class Text:
