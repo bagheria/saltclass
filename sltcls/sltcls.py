@@ -196,37 +196,33 @@ class SLT:
     def enrich(self, method=None, num_clusters=3):
         if method == 'kmeans':
             self.kmeans_enrich(numclusters=num_clusters)
+        elif method == 'mbk':
+            self.mbk_enrich(numclusters=num_clusters)
         else:
             self.kmeans_enrich(numclusters=num_clusters)
 
     def kmeans_enrich(self, numclusters=10):
         """Enrich the training set with kmeans algorithm.
-        :param num_clusters: Number of clusters
-        :type num_clusters: int
+        :param numclusters: Number of clusters
+        :type numclusters: int
         """
-
         km = KMeans(n_clusters=numclusters, init='k-means++', max_iter=300, n_init=1, verbose=0, random_state=3425)
         km.fit(self.X)
-
         n_features = self.vocabulary.__len__()
         # feature_names = vec.get_feature_names() # self.vocabulary
-
         for x in range(self.X.__len__()):
             # check gamma, influence of length
             gamma = np.count_nonzero(x) / n_features
-
             x_label = km.labels_[x]
             center_vector = km.cluster_centers_[x_label]
-
             for i in range(n_features):  # (for each word in the cluster center)
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
     def mbk_enrich(self, numclusters=10):
         """Enrich the training set with MiniBatchKMeans clustering algorithm.
-        :param num_clusters: Number of clusters
-        :type num_clusters: int
+        :param numclusters: Number of clusters
+        :type numclusters: int
         """
-
         mbk = MiniBatchKMeans(init='k-means++', n_clusters=numclusters, batch_size=100,
                               n_init=10, max_no_improvement=10, verbose=0,
                               random_state=0)
@@ -235,10 +231,8 @@ class SLT:
         for x in range(self.X.__len__()):
             # check gamma, influence of length
             gamma = np.count_nonzero(x) / n_features
-
             x_label = mbk.labels_[x]
             center_vector = mbk.cluster_centers_[x_label]
-
             for i in range(n_features):  # (for each word in the cluster center)
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
