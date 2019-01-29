@@ -6,6 +6,7 @@ train_y = [0, 1, 1]
 vocab = ['statistics', 'medicine', 'crime']
 
 obj_new = sltcls.SLT(train_X, train_y, vocabulary=vocab, language='en')
+object_from_file = sltcls.SLT.data_from_dir(train_dir='D:/train/', language='en')
 obj_new.enrich('kmeans', 2)
 obj_new.train()
 obj_new.print_info()
