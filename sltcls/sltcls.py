@@ -5,6 +5,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import roc_curve, auc
 from sklearn.cluster import KMeans
+from sklearn.cluster import Birch
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
 from scipy import interp
@@ -233,6 +234,30 @@ class SLT:
             gamma = np.count_nonzero(x) / n_features
             x_label = mbk.labels_[x]
             center_vector = mbk.cluster_centers_[x_label]
+            for i in range(n_features):  # (for each word in the cluster center)
+                self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
+
+    def birch_enrich(self, numclusters=10, threshold=1.7):
+        """Enrich the training set with MiniBatchKMeans clustering algorithm.
+        BIRCH (balanced iterative reducing and clustering using hierarchies) is an unsupervised data mining algorithm
+        used to perform hierarchical clustering over particularly large data-sets. An advantage of BIRCH is its ability
+        to incrementally and dynamically cluster incoming, multi-dimensional metric data points in an attempt to produce
+        the best quality clustering for a given set of resources (memory and time constraints). In most cases, BIRCH
+        only requires a single scan of the database.
+        :param numclusters: Number of clusters
+        :type numclusters: int
+        :param threshold: The radius of the subcluster obtained by merging a new sample and the closest subcluster
+        should be lesser than the threshold.
+        :type threshold: int
+        """
+        birch = Birch(threshold=threshold, n_clusters=numclusters)
+        birch.fit(self.X)
+        n_features = self.vocabulary.__len__()
+        for x in range(self.X.__len__()):
+            # check gamma, influence of length
+            gamma = np.count_nonzero(x) / n_features
+            x_label = birch.labels_[x]
+            center_vector = birch.cluster_centers_[x_label]
             for i in range(n_features):  # (for each word in the cluster center)
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
