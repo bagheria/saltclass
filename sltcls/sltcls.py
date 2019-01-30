@@ -1,4 +1,4 @@
-from sklearn.cluster import MeanShift, estimate_bandwidth, MiniBatchKMeans, KMeans, Birch
+from sklearn.cluster import MeanShift, estimate_bandwidth, MiniBatchKMeans, KMeans, Birch, DBSCAN
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.naive_bayes import MultinomialNB
@@ -247,7 +247,7 @@ class SLT:
         :type numclusters: int
         :param threshold: The radius of the subcluster obtained by merging a new sample and the closest subcluster
         should be lesser than the threshold.
-        :type threshold: int
+        :type threshold: float
         """
         birch = Birch(threshold=threshold, n_clusters=numclusters)
         birch.fit(self.X)
@@ -295,6 +295,43 @@ class SLT:
             center_vector = cluster_centers[x_label]
             for i in range(n_features):
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
+
+    def dbscan_enrich(self, eps=1.36):
+        """Enrich the training set with DBSCAN clustering algorithm.
+        Density-based spatial clustering of applications with noise (DBSCAN) is a well-known data clustering algorithm.
+        Based on a set of points, DBSCAN groups together points that are close to each other based on a distance
+        measurement (usually Euclidean distance) and a minimum number of points. It also marks as outliers the points
+        that are in low-density regions. (DBSCAN does not compute the nearest core point or cluster center!)
+        :param eps: the minimum distance between two points. It means that if the distance between two points is lower
+        or equal to this value (eps), these points are considered neighbors.
+        :type eps: float
+        # minPoints: the minimum number of points to form a dense region. For example, if we set the minPoints parameter
+         as 5, then we need at least 5 points to form a dense region.
+        """
+        dbscan = DBSCAN(eps)
+        dbscan.fit(self.X)
+        labels = dbscan.labels_
+        # zeros_like returns an array of zeros with the same shape and type as a given array,
+        # dtype will overrides the data type of the result.
+        core_samples_mask = np.zeros_like(labels, dtype=bool)
+        # core_sample_indices_: index of core samples (array, shape = [n_core_samples])
+        core_samples_mask[dbscan.core_sample_indices_] = True
+        unique_labels = set(labels)
+        # Number of clusters in labels, ignoring noise if present.
+        # n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+        n_features = self.vocabulary.__len__()
+        core_samples = []
+        for k in unique_labels:
+            class_member_mask = (labels == k)
+            core_samples.append(self.X[class_member_mask & core_samples_mask])
+        for x in range(self.X.__len__()):
+            gamma = np.count_nonzero(x) / n_features
+            x_label = labels[x]
+            if x_label == -1:
+                continue
+            for i in range(n_features):
+                self.X[x][i] = self.X[x][i] + gamma * (np.float64(core_samples[x_label][0:1][i]) +
+                                                       np.float64(core_samples[x_label][1:2][i])) / 2
 
 
 class Text:
