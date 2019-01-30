@@ -7,11 +7,14 @@ vocab = ['statistics', 'medicine', 'crime']
 
 obj_new = sltcls.SLT(train_X, train_y, vocabulary=vocab, language='en')
 object_from_file = sltcls.SLT.data_from_dir(train_dir='D:/train/', language='en')
-obj_new.enrich('kmeans', 2)
+obj_new = object_from_file
+obj_new.enrich()
 obj_new.train()
 obj_new.print_info()
-prediction = obj_new.predict(data_file='first_test.txt')
+prediction = obj_new.predict(data_file='second_test.txt')
+print(obj_new.vocabulary)
 print(obj_new.newdata)
+print([k for (k, v) in obj_new.vocabulary.items() if obj_new.newdata[0][v] != 0])
 print(prediction)
 
 
