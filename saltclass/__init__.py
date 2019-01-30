@@ -1,0 +1,1 @@
+from .saltclass import SALT

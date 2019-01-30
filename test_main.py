@@ -1,12 +1,12 @@
-import sltcls
+import saltclass
 
 
 train_X = [[10, 0, 0], [0, 20, 0], [4, 13, 5]]
 train_y = [0, 1, 1]
 vocab = ['statistics', 'medicine', 'crime']
 
-obj_new = sltcls.SLT(train_X, train_y, vocabulary=vocab, language='en')
-object_from_file = sltcls.SLT.data_from_dir(train_dir='D:/train/', language='en')
+obj_new = saltclass.SALT(train_X, train_y, vocabulary=vocab, language='en')
+object_from_file = saltclass.SALT.data_from_dir(train_dir='D:/train/', language='en')
 obj_new = object_from_file
 obj_new.enrich()
 obj_new.train()

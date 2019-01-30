@@ -15,7 +15,7 @@ import lda
 import os
 
 
-class SLT:
+class SALT:
     """Classify short/long text to the predefined categories using clustering-based enrichment."""
     def __init__(self, x, y, vocabulary, **kwargs):
         """Initialize the object with training matrix and setting.
@@ -51,7 +51,7 @@ class SLT:
         :param kwargs: Arbitrary keyword arguments: language='nl', vectorizer='count'
         :type kwargs: str
         :return: Object
-        :rtype: SLT
+        :rtype: SALT
         """
         if kwargs is not None and 'vectorizer' in kwargs:
             vectorizer = kwargs['vectorizer']
@@ -74,7 +74,7 @@ class SLT:
         :param kwargs: Arbitrary keyword arguments: classifier='SVM', kernel='lin', degree=2, gamma=2
         :type kwargs: str, int
         :return: Object
-        :rtype: SLT
+        :rtype: SALT
         """
         if kwargs is not None and 'classifier' in kwargs:
             if kwargs['classifier'] == 'SVM':
@@ -193,13 +193,23 @@ class SLT:
         plt.legend(loc="lower right")
         plt.show()
 
-    def enrich(self, method=None, num_clusters=3):
+    def enrich(self, method=None, num_clusters=2):
         if method == 'kmeans':
             self.kmeans_enrich(numclusters=num_clusters)
         elif method == 'mbk':
             self.mbk_enrich(numclusters=num_clusters)
-        else:
+        elif method == 'lda':
             self.lda_enrich(numclusters=num_clusters)
+        elif method == 'birch':
+            self.birch_enrich(numclusters=num_clusters)
+        elif method == 'dbscan':
+            self.dbscan_enrich()
+        elif method == 'gmm':
+            self.gmm_enrich(numclusters=num_clusters)
+        elif method == 'ms':
+            self.ms_enrich()
+        else:
+            self.kmeans_enrich(numclusters=num_clusters)
 
     def kmeans_enrich(self, numclusters=10):
         """Enrich the training set with kmeans algorithm.
