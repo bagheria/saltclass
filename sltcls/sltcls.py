@@ -11,6 +11,7 @@ from tqdm import tqdm
 import language_check
 import pandas as pd
 import numpy as np
+import lda
 import os
 
 
@@ -133,8 +134,8 @@ class SLT:
         else:
             vec = TfidfVectorizer(vocabulary=self.vocabulary)
 
-        x_test = vec.fit_transform(self.newdata)
-        self.newdata = pd.DataFrame(x_test.toarray(), columns=self.vocabulary)
+        x_test = vec.fit_transform(np.array(self.newdata))
+        self.newdata = x_test.toarray()
 
     # def predict(self, data_file, enrich=True):
     #     # enrich test data
@@ -198,7 +199,7 @@ class SLT:
         elif method == 'mbk':
             self.mbk_enrich(numclusters=num_clusters)
         else:
-            self.kmeans_enrich(numclusters=num_clusters)
+            self.lda_enrich(numclusters=num_clusters)
 
     def kmeans_enrich(self, numclusters=10):
         """Enrich the training set with kmeans algorithm.
@@ -333,6 +334,37 @@ class SLT:
                 self.X[x][i] = self.X[x][i] + gamma * (np.float64(core_samples[x_label][0:1][i]) +
                                                        np.float64(core_samples[x_label][1:2][i])) / 2
 
+    def lda_enrich(self, numclusters=10):
+        """Enrich the training set with LDA.
+        :param numclusters: Number of clusters
+        :type numclusters: int
+        """
+        # X = np.int32(self.X)
+        self.X = np.array(self.X)
+        model = lda.LDA(n_topics=numclusters, n_iter=1000, random_state=1)
+        model.fit(self.X.astype(np.intp))
+        topic_word = model.topic_word_
+        # n_top_words = 8
+        topics_distributions = []
+        train_set = []
+        n_features = self.vocabulary.__len__()
+        for x in range(self.X.__len__()):
+            if np.count_nonzero(self.X[x]) == 0:
+                gamma = 0
+            else:
+                gamma = np.count_nonzero(self.X[x]) / n_features
+            doc_topic_dist = model.doc_topic_[x]
+            for i in range(n_features):
+                lda_ev = 0
+                for k, topic_dist in enumerate(topic_word):
+                    lda_ev = lda_ev + doc_topic_dist[k] * topic_dist[i]
+                self.X[x][i] = self.X[x][i] + gamma * lda_ev
+
+            # topic_words = np.array(vocab)[np.argsort(topic_dist)][:-(n_top_words + 1):-1]
+            # topic_words_distributions = np.array(topic_dist)[np.argsort(topic_dist)][:-(n_top_words + 1):-1]
+            # print('Topic {}: {}'.format(i, ' '.join(topic_words)))
+            # print('Distributions for Topic {}: {}'.format(i, topic_words_distributions))
+
 
 class Text:
     """Text as content and category."""
@@ -406,4 +438,15 @@ def detect_negation_scope(X, language):
     :type language: str
     :return:
     :rtype:
+    """
+
+
+def feature_selection():
+    """
+    training_feature_names = vec.get_feature_names()
+    from sklearn.feature_selection import SelectKBest, mutual_info_classif
+    selector = SelectKBest(mutual_info_classif, k=1000)
+    X = selector.fit_transform(tfidf_matrix_train[n_topics:lenght_t], decursus_target)
+    cols = selector.get_support(indices=True)
+    training_feature_names = np.array(training_feature_names)[cols]
     """
