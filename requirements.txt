@@ -1,0 +1,7 @@
+sklearn
+matplotlib
+scipy
+numpy
+tqdm
+language_check
+lda
