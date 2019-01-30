@@ -1,11 +1,8 @@
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.cluster import MeanShift, estimate_bandwidth, MiniBatchKMeans, KMeans, Birch
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import roc_curve, auc
-from sklearn.cluster import KMeans
-from sklearn.cluster import Birch
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
 from sklearn import mixture
@@ -233,11 +230,10 @@ class SLT:
         cluster_centers = mbk.cluster_centers_
         n_features = self.vocabulary.__len__()
         for x in range(self.X.__len__()):
-            # check gamma, influence of length
             gamma = np.count_nonzero(x) / n_features
             x_label = labels[x]
             center_vector = cluster_centers[x_label]
-            for i in range(n_features):  # (for each word in the cluster center)
+            for i in range(n_features):
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
     def birch_enrich(self, numclusters=10, threshold=1.7):
@@ -259,11 +255,10 @@ class SLT:
         cluster_centers = birch.subcluster_centers_
         n_features = self.vocabulary.__len__()
         for x in range(self.X.__len__()):
-            # check gamma, influence of length
             gamma = np.count_nonzero(x) / n_features
             x_label = labels[x]
             center_vector = cluster_centers[x_label]
-            for i in range(n_features):  # (for each word in the cluster center)
+            for i in range(n_features):
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
     def gmm_enrich(self, numclusters=10):
@@ -277,13 +272,29 @@ class SLT:
         cluster_centers = gmm.means_
         n_features = self.vocabulary.__len__()
         for x in range(self.X.__len__()):
-            # check gamma, influence of length
             gamma = np.count_nonzero(x) / n_features
             x_label = labels[x]
             center_vector = cluster_centers[x_label]
-            for i in range(n_features):  # (for each word in the cluster center)
+            for i in range(n_features):
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
+    def ms_enrich(self):
+        """Enrich the training set with MeanShift clustering algorithm."""
+        # bandwidth can be automatically detected using
+        bandwidth = estimate_bandwidth(self.X, quantile=0.2, n_samples=500)
+        ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
+        ms.fit(self.X)
+        labels = ms.labels_
+        cluster_centers = ms.cluster_centers_
+        # labels_unique = np.unique(labels)
+        # n_clusters_ = len(labels_unique)
+        n_features = self.vocabulary.__len__()
+        for x in range(self.X.__len__()):
+            gamma = np.count_nonzero(x) / n_features
+            x_label = labels[x]
+            center_vector = cluster_centers[x_label]
+            for i in range(n_features):
+                self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
 
 class Text:
