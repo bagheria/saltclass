@@ -6,4 +6,4 @@ cache: pip
 install:
   - pip install -r requirements.txt
 script:
-  - python test_saltclass.py
+  - python test/test_saltclass.py
