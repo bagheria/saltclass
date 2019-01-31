@@ -1,5 +1,5 @@
 import pytest
-from saltclass import saltclass
+import saltclass
 
 
 def test_is_instance():
