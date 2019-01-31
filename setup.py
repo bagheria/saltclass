@@ -7,7 +7,7 @@ def readme():
 
 setup(name='saltclass',
       version='0.1',
-      description='Short/Long Text Classifier using clustering-based enrichment',
+      description='Short and Long Text Classifier using clustering-based enrichment',
       long_description=readme(),
       keywords='short text classification',
       url='https://github.com/bagheria/saltclass',
