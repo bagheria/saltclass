@@ -5,3 +5,4 @@ numpy
 tqdm
 language_check
 lda
+pytest
