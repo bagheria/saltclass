@@ -19,20 +19,16 @@ To install via pip::
     $ pip install --upgrade saltclass
 
 Sample Usage
-````````````
+------------
 .. code:: python
 
     >>> from saltclass import SALT
-
-Define object from dataframe:
     >>> train_X = [[10, 0, 0], [0, 20, 0], [4, 13, 5]]
     >>> train_y = [0, 1, 1]
     >>> vocab = ['statistics', 'medicine', 'crime']
     >>> object_from_df = SALT(train_X, train_y, vocabulary=vocab)
 
-Define object from file directory:
     >>> object_from_file = SALT.data_from_dir(train_dir='D:/train/', language='en')
-
     >>> object_from_df.enrich()
     >>> object_from_df.train(classifier='svm')
     >>> object_from_df.print_info()
@@ -42,3 +38,18 @@ Define object from file directory:
     >>> print(object_from_df.newdata)
     >>> print([k for (k, v) in object_from_df.vocabulary.items() if object_from_df.newdata[0][v] != 0])
     >>> print(prediction)
+
+
+Dependencies
+~~~~~~~~~~~~
+
+saltclass requires:
+
+- Python (>= 3.5)
+- NumPy (>= 1.11.0)
+- SciPy (>= 0.17.0)
+- LDA
+- Scikit-learn (>= 0.20.0)
+- Matplotlib (>= 3.0)
+- Tqdm
+- Language_check
