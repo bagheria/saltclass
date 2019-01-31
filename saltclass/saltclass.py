@@ -9,7 +9,6 @@ from sklearn import mixture
 from scipy import interp
 from tqdm import tqdm
 import language_check
-import pandas as pd
 import numpy as np
 import lda
 import os
@@ -36,12 +35,10 @@ class SALT:
             self.vectorizer = kwargs['vectorizer']
         else:
             self.vectorizer = 'count'
-
         if kwargs is not None and 'language' in kwargs:
             self.language = kwargs['language']
         else:
             self.language = 'nl'
-
         self.clf = None
         self.vocabulary = vocabulary
 
@@ -57,12 +54,10 @@ class SALT:
             vectorizer = kwargs['vectorizer']
         else:
             vectorizer = 'count'
-
         if kwargs is not None and 'language' in kwargs:
             language = kwargs['language']
         else:
             language = 'nl'
-
         # train data
         x_train, y_train, vocabulary = initialize_dataset(train_path=kwargs['train_dir'], word_vectorizer=vectorizer,
                                                           language=language)
@@ -93,7 +88,6 @@ class SALT:
                         self.clf = SVC(gamma=2, C=1, probability=True)
         else:
             self.clf = MultinomialNB()
-
         self.clf.fit(self.X, self.y)
 
     def print_info(self):
@@ -133,7 +127,6 @@ class SALT:
             vec = CountVectorizer(vocabulary=self.vocabulary)
         else:
             vec = TfidfVectorizer(vocabulary=self.vocabulary)
-
         x_test = vec.fit_transform(np.array(self.newdata))
         self.newdata = x_test.toarray()
 
@@ -154,7 +147,6 @@ class SALT:
         aucs = []
         mean_fpr = np.linspace(0, 1, 100)
         cv = StratifiedKFold(n_splits=5)
-
         i = 0
         for train, test in cv.split(self.X, self.y):
             probas_ = self.clf.fit(self.X.ix[train], [self.y[i] for i in train]).predict_proba(self.X.ix[test])
@@ -166,11 +158,9 @@ class SALT:
             aucs.append(roc_auc)
             plt.plot(fpr, tpr, lw=1, alpha=0.3,
                      label='ROC fold %d (AUC = %0.2f)' % (i + 1, roc_auc))
-
             i += 1
         plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
                  label='Chance', alpha=.8)
-
         mean_tpr = np.mean(tprs, axis=0)
         mean_tpr[-1] = 1.0
         mean_auc = auc(mean_fpr, mean_tpr)
@@ -178,13 +168,11 @@ class SALT:
         plt.plot(mean_fpr, mean_tpr, color='b',
                  label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
                  lw=2, alpha=.8)
-
         std_tpr = np.std(tprs, axis=0)
         tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
         tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
         plt.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
                          label=r'$\pm$ 1 std. dev.')
-
         plt.xlim([-0.05, 1.05])
         plt.ylim([-0.05, 1.05])
         plt.xlabel('False Positive Rate')
@@ -402,22 +390,17 @@ def initialize_dataset(train_path, word_vectorizer, language='nl'):
         for filename in tqdm(os.listdir(path)):
             f = open(path + filename, "r")
             docs.append(Text(f.read(), categories[i]))
-
     # add ngram
     # add grid_search
     if word_vectorizer == 'count':
         vec = CountVectorizer()
     else:
         vec = TfidfVectorizer()
-
     docs = spell_correction(docs, language)
-
     num_docs = docs.__len__()
-
     x = vec.fit_transform(np.array([docs[i].content for i in range(num_docs)]))
     x = x.toarray()
     categories = np.array([docs[i].category for i in range(num_docs)])
-
     vocab = vec.vocabulary_
     return x, categories, vocab
 
