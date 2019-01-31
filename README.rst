@@ -1,7 +1,13 @@
+|Travis|_
+
+.. |Travis| image:: https://travis-ci.com/bagheria/saltclass.svg?token=fYbdQUbpnoucyHyb3fs2&branch=master
+.. _Travis: https://travis-ci.com/bagheria/saltclass
+
 saltclass
 ---------
 
-Short and Long Text Classifier
+saltclass (Short and Long Text Classifier) is a Python module for text classification built under the MIT license.
+The project was started in 2018 at the Department of Methodology & Statistics, Utrecht University.
 
 
 Installation
