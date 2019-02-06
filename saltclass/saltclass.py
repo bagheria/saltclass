@@ -86,8 +86,9 @@ class SALT:
                         self.clf = SVC(gamma=kwargs['gamma'], C=1, probability=True)
                     else:
                         self.clf = SVC(gamma=2, C=1, probability=True)
-        else:
-            self.clf = MultinomialNB()
+            else:
+                self.clf = MultinomialNB()
+
         self.clf.fit(self.X, self.y)
 
     def print_info(self):
