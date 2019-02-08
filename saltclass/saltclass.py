@@ -1,7 +1,13 @@
 from sklearn.cluster import MeanShift, estimate_bandwidth, MiniBatchKMeans, KMeans, Birch, DBSCAN
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.model_selection import StratifiedKFold
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.gaussian_process.kernels import RBF
+from sklearn.neural_network import MLPClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import roc_curve, auc
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
@@ -65,8 +71,19 @@ class SALT:
         return stclassifier_object
 
     def train(self, **kwargs):
-        """Train classifier.
-        :param kwargs: Arbitrary keyword arguments: classifier='SVM', kernel='lin', degree=2, gamma=2
+        """Train classifier. Refer to scikit-learn.org for documentation.
+        :param kwargs: Arbitrary keyword arguments: classifier='SVM', kernel='poly', degree=2
+                                                    classifier='SVM', kernel='sigmoid'
+                                                    classifier='SVM', kernel='lin', gamma=2
+                                                    classifier='KNN', k=3
+                                                    classifier='DT', depth=5
+                                                    classifier='RF', depth=5, n_estimators=10, max_features=1
+                                                    classifier='NN', alpha=1, hidden_layer_sizes=(50,), max_iter=10,
+                                                                     solver='sgd', ’adam’, activation=’relu’
+                                                    classifier='AdaB'
+                                                    classifier='GaussianNB'
+                                                    classifier='MultinomialNB'
+                                                    classifier='GP'
         :type kwargs: str, int
         :return: Object
         :rtype: SALT
@@ -81,11 +98,226 @@ class SALT:
                             self.clf = SVC(kernel='poly', degree=2, C=1.0, probability=True)
                     elif kwargs['kernel'] == 'sigmoid':
                         self.clf = SVC(kernel='sigmoid', probability=True)
-                else:  # kwargs['kernel'] is 'lin'
+                    else:
+                        # kwargs['kernel'] is 'lin'
+                        if 'gamma' in kwargs:
+                            self.clf = SVC(gamma=kwargs['gamma'], C=1, probability=True)
+                        else:
+                            self.clf = SVC(gamma=2, C=1, probability=True)
+                else:
+                    # kwargs['kernel'] is 'lin'
                     if 'gamma' in kwargs:
                         self.clf = SVC(gamma=kwargs['gamma'], C=1, probability=True)
                     else:
                         self.clf = SVC(gamma=2, C=1, probability=True)
+            elif kwargs['classifier'] == 'MultinomialNB':
+                self.clf = MultinomialNB()
+            elif kwargs['classifier'] == 'GaussianNB':
+                self.clf = GaussianNB()
+            elif kwargs['classifier'] == 'AdaB':
+                self.clf = AdaBoostClassifier()
+            elif kwargs['classifier'] == 'GP':
+                self.clf = GaussianProcessClassifier(1.0 * RBF(1.0))
+            elif kwargs['classifier'] == 'NN':
+                if 'hidden_layer_sizes' in kwargs:
+                    if 'max_iter' in kwargs:
+                        if 'solver' in kwargs:
+                            if 'activation' in kwargs:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             max_iter=kwargs['max_iter'],
+                                                             solver=kwargs['solver'],
+                                                             activation=kwargs['activation'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             max_iter=kwargs['max_iter'],
+                                                             solver=kwargs['solver'],
+                                                             activation=kwargs['activation'])
+                            else:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             max_iter=kwargs['max_iter'],
+                                                             solver=kwargs['solver'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             max_iter=kwargs['max_iter'],
+                                                             solver=kwargs['solver'])
+                        else:
+                            if 'activation' in kwargs:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             max_iter=kwargs['max_iter'],
+                                                             activation=kwargs['activation'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             max_iter=kwargs['max_iter'],
+                                                             activation=kwargs['activation'])
+                            else:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             max_iter=kwargs['max_iter'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             max_iter=kwargs['max_iter'])
+                    else:
+                        if 'solver' in kwargs:
+                            if 'activation' in kwargs:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             solver=kwargs['solver'],
+                                                             activation=kwargs['activation'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             solver=kwargs['solver'],
+                                                             activation=kwargs['activation'])
+                            else:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             solver=kwargs['solver'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             solver=kwargs['solver'])
+                        else:
+                            if 'activation' in kwargs:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             activation=kwargs['activation'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'],
+                                                             activation=kwargs['activation'])
+                            else:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             hidden_layer_sizes=kwargs['hidden_layer_sizes'])
+                else:
+                    if 'max_iter' in kwargs:
+                        if 'solver' in kwargs:
+                            if 'activation' in kwargs:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             max_iter=kwargs['max_iter'],
+                                                             solver=kwargs['solver'],
+                                                             activation=kwargs['activation'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             max_iter=kwargs['max_iter'],
+                                                             solver=kwargs['solver'],
+                                                             activation=kwargs['activation'])
+                            else:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             max_iter=kwargs['max_iter'],
+                                                             solver=kwargs['solver'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             max_iter=kwargs['max_iter'],
+                                                             solver=kwargs['solver'])
+                        else:
+                            if 'activation' in kwargs:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             max_iter=kwargs['max_iter'],
+                                                             activation=kwargs['activation'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             max_iter=kwargs['max_iter'],
+                                                             activation=kwargs['activation'])
+                            else:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             max_iter=kwargs['max_iter'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             max_iter=kwargs['max_iter'])
+                    else:
+                        if 'solver' in kwargs:
+                            if 'activation' in kwargs:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             solver=kwargs['solver'],
+                                                             activation=kwargs['activation'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             solver=kwargs['solver'],
+                                                             activation=kwargs['activation'])
+                            else:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             solver=kwargs['solver'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             solver=kwargs['solver'])
+                        else:
+                            if 'activation' in kwargs:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'],
+                                                             activation=kwargs['activation'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1,
+                                                             activation=kwargs['activation'])
+                            else:
+                                if 'alpha' in kwargs:
+                                    self.clf = MLPClassifier(alpha=kwargs['alpha'])
+                                else:
+                                    self.clf = MLPClassifier(alpha=0.1)
+
+            elif kwargs['classifier'] == 'RF':
+                if 'max_depth' in kwargs:
+                    if 'n_estimators' in kwargs:
+                        if 'max_features' in kwargs:
+                            self.clf = RandomForestClassifier(max_depth=kwargs['max_depth'],
+                                                              n_estimators=kwargs['n_estimators'],
+                                                              max_features=kwargs['max_features'])
+                        else:
+                            self.clf = RandomForestClassifier(max_depth=kwargs['max_depth'],
+                                                              n_estimators=kwargs['n_estimators'],
+                                                              max_features=1)
+                    else:
+                        self.clf = RandomForestClassifier(max_depth=kwargs['max_depth'],
+                                                          n_estimators=10,
+                                                          max_features=1)
+                else:
+                    if 'n_estimators' in kwargs:
+                        if 'max_features' in kwargs:
+                            self.clf = RandomForestClassifier(max_depth=5,
+                                                              n_estimators=kwargs['n_estimators'],
+                                                              max_features=kwargs['max_features'])
+                        else:
+                            self.clf = RandomForestClassifier(max_depth=5,
+                                                              n_estimators=kwargs['n_estimators'],
+                                                              max_features=1)
+                    else:
+                        self.clf = RandomForestClassifier(max_depth=5,
+                                                          n_estimators=10,
+                                                          max_features=1)
+
+            elif kwargs['classifier'] == 'KNN':
+                if 'k' in kwargs:
+                    self.clf = KNeighborsClassifier(kwargs['k'])
+                else:
+                    self. clf = KNeighborsClassifier(3)
+            elif kwargs['classifier'] == 'DT':
+                if 'depth' in kwargs:
+                    self.clf = DecisionTreeClassifier(max_depth=kwargs['depth'])
+                else:
+                    self.clf = DecisionTreeClassifier(max_depth=5)
             else:
                 self.clf = MultinomialNB()
 
