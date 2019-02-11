@@ -49,8 +49,10 @@ class SALT:
         self.vocabulary = vocabulary
 
     @classmethod
-    def data_from_dir(cls, **kwargs):
+    def data_from_dir(cls, train_dir=None, **kwargs):
         """Initialize the object from a directory of text files.
+        :param train_dir: Directory of folders of text files
+        :type train_dir: str
         :param kwargs: Arbitrary keyword arguments: language='nl', vectorizer='count'
         :type kwargs: str
         :return: Object
@@ -65,8 +67,12 @@ class SALT:
         else:
             language = 'nl'
         # train data
-        x_train, y_train, vocabulary = initialize_dataset(train_path=kwargs['train_dir'], word_vectorizer=vectorizer,
-                                                          language=language)
+        try:
+            x_train, y_train, vocabulary = initialize_dataset(train_path=train_dir, word_vectorizer=vectorizer,
+                                                              language=language)
+        except Exception as e:
+            print("You must feed the directory of class folders containing txt files + " + str(e))
+
         stclassifier_object = cls(x_train, y_train, vocabulary, vectorizer=vectorizer, language=language)
         return stclassifier_object
 
@@ -626,9 +632,9 @@ def initialize_dataset(train_path, word_vectorizer, language='nl'):
     # add ngram
     # add grid_search
     if word_vectorizer == 'count':
-        vec = CountVectorizer()
+        vec = CountVectorizer(ngram_range=((1, 1), (1, 2)))
     else:
-        vec = TfidfVectorizer()
+        vec = TfidfVectorizer(ngram_range=((1, 1), (1, 2)))
     docs = spell_correction(docs, language)
     num_docs = docs.__len__()
     x = vec.fit_transform(np.array([docs[i].content for i in range(num_docs)]))
