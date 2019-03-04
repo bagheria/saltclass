@@ -421,6 +421,21 @@ class SALT:
         plt.show()
 
     def enrich(self, method=None, num_clusters=2):
+        """
+        Enrich the training set with the selected method
+        :param method: clustering method: method='lda'
+                                          method='kmeans'
+                                          method='mbk'
+                                          method='birch'
+                                          method='gmm'
+                                          method='ms'
+                                          method='dbscan'
+        :type method: str
+        :param num_clusters: number of clusters, or groups
+        :type num_clusters: int
+        :return: Object
+        :rtype: SALT
+        """
         if method == 'kmeans':
             self.kmeans_enrich(numclusters=num_clusters)
         elif method == 'mbk':
@@ -637,6 +652,10 @@ def initialize_dataset(train_path, word_vectorizer, language='nl'):
         vec = TfidfVectorizer(ngram_range=((1, 1), (1, 2)))
     docs = spell_correction(docs, language)
     num_docs = docs.__len__()
+    # arr = []
+    # for i in range(num_docs):
+    #      arr.append(docs[i].content)
+    # x = vec.fit_transform(arr)
     x = vec.fit_transform(np.array([docs[i].content for i in range(num_docs)]))
     x = x.toarray()
     categories = np.array([docs[i].category for i in range(num_docs)])
@@ -658,7 +677,6 @@ def spell_correction(X, language):
     for i in tqdm(range(X.__len__())):
         matches = tool.check(X[i].content)
         X[i].content = language_check.correct(X[i].content, matches)
-
     return X
 
 
