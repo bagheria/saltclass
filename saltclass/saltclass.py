@@ -433,22 +433,23 @@ class SALT:
         :return: Object
         :rtype: SALT
         """
+        input_clustering = self.prepare_input_clustering(include_unlabeled, unlabeled_dir, unlabeled_matrix)
         if method == 'kmeans':
-            self.kmeans_enrich(num_clusters, include_unlabeled, unlabeled_dir, unlabeled_matrix)
+            self.kmeans_enrich(input_clustering, num_clusters)
         elif method == 'mbk':
-            self.mbk_enrich(numclusters=num_clusters)
+            self.mbk_enrich(input_clustering, num_clusters)
         elif method == 'lda':
-            self.lda_enrich(numclusters=num_clusters)
+            self.lda_enrich(input_clustering, num_clusters)
         elif method == 'birch':
-            self.birch_enrich(numclusters=num_clusters)
+            self.birch_enrich(input_clustering, num_clusters)
         elif method == 'dbscan':
-            self.dbscan_enrich()
+            self.dbscan_enrich(input_clustering)
         elif method == 'gmm':
-            self.gmm_enrich(numclusters=num_clusters)
+            self.gmm_enrich(input_clustering, num_clusters)
         elif method == 'ms':
-            self.ms_enrich()
+            self.ms_enrich(input_clustering)
         else:
-            self.kmeans_enrich(numclusters=num_clusters)
+            self.kmeans_enrich(input_clustering, num_clusters)
 
     def prepare_unlabeled_data(self, unlabeled_dir):
         unlabeled_docs = []
@@ -466,20 +467,13 @@ class SALT:
         x_unlabeled = x_unlabeled.toarray()
         return x_unlabeled
 
-    def kmeans_enrich(self, numclusters=2, include_unlabeled=False, unlabeled_dir=None, unlabeled_matrix=None):
+    def kmeans_enrich(self, input_clustering, numclusters=2):
         """Enrich the training set with kmeans algorithm.
         :param numclusters: Number of clusters
         :type numclusters: int
         :param include_unlabeled: Test path to be included in enrichment
         :type include_unlabeled: str
         """
-        if include_unlabeled is True:
-            if unlabeled_dir is not None:
-                unlabeled_matrix = self.prepare_unlabeled_data(unlabeled_dir)
-                unlabeled_matrix = np.array(unlabeled_matrix)
-            input_clustering = np.concatenate((self.X, unlabeled_matrix), axis=0)
-        else:
-            input_clustering = self.X
         km = KMeans(n_clusters=numclusters, init='k-means++', max_iter=300, n_init=1, verbose=0, random_state=3425)
         km.fit(input_clustering)
         n_features = self.vocabulary.__len__()
@@ -492,7 +486,7 @@ class SALT:
             for i in range(n_features):  # (for each word in the cluster center)
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
-    def mbk_enrich(self, numclusters=10):
+    def mbk_enrich(self, input_clustering, numclusters=10):
         """Enrich the training set with MiniBatchKMeans clustering algorithm.
         :param numclusters: Number of clusters
         :type numclusters: int
@@ -500,7 +494,7 @@ class SALT:
         mbk = MiniBatchKMeans(init='k-means++', n_clusters=numclusters, batch_size=100,
                               n_init=10, max_no_improvement=10, verbose=0,
                               random_state=0)
-        mbk.fit(self.X)
+        mbk.fit(input_clustering)
         labels = mbk.labels_
         cluster_centers = mbk.cluster_centers_
         n_features = self.vocabulary.__len__()
@@ -511,7 +505,7 @@ class SALT:
             for i in range(n_features):
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
-    def birch_enrich(self, numclusters=10, threshold=1.7):
+    def birch_enrich(self, input_clustering, numclusters=10, threshold=1.7):
         """Enrich the training set with BIRCH clustering algorithm.
         BIRCH (balanced iterative reducing and clustering using hierarchies) is an unsupervised data mining algorithm
         used to perform hierarchical clustering over particularly large data-sets. An advantage of BIRCH is its ability
@@ -525,7 +519,7 @@ class SALT:
         :type threshold: float
         """
         birch = Birch(threshold=threshold, n_clusters=numclusters)
-        birch.fit(self.X)
+        birch.fit(input_clustering)
         labels = birch.labels_
         cluster_centers = birch.subcluster_centers_
         n_features = self.vocabulary.__len__()
@@ -536,13 +530,13 @@ class SALT:
             for i in range(n_features):
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
-    def gmm_enrich(self, numclusters=10):
+    def gmm_enrich(self, input_clustering, numclusters=10):
         """Enrich the training set with Gaussian Mixture Modeling clustering algorithm.
         :param numclusters: Number of clusters
         :type numclusters: int
         """
         gmm = mixture.GaussianMixture(n_components=numclusters, covariance_type='full')
-        gmm.fit(self.X)
+        gmm.fit(input_clustering)
         labels = gmm.predict(self.X)
         cluster_centers = gmm.means_
         n_features = self.vocabulary.__len__()
@@ -553,12 +547,12 @@ class SALT:
             for i in range(n_features):
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
-    def ms_enrich(self):
+    def ms_enrich(self, input_clustering):
         """Enrich the training set with MeanShift clustering algorithm."""
         # bandwidth can be automatically detected using
         bandwidth = estimate_bandwidth(self.X, quantile=0.2, n_samples=500)
         ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
-        ms.fit(self.X)
+        ms.fit(input_clustering)
         labels = ms.labels_
         cluster_centers = ms.cluster_centers_
         # labels_unique = np.unique(labels)
@@ -571,7 +565,7 @@ class SALT:
             for i in range(n_features):
                 self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
 
-    def dbscan_enrich(self, eps=1.36):
+    def dbscan_enrich(self, input_clustering, eps=1.36):
         """Enrich the training set with DBSCAN clustering algorithm.
         Density-based spatial clustering of applications with noise (DBSCAN) is a well-known data clustering algorithm.
         Based on a set of points, DBSCAN groups together points that are close to each other based on a distance
@@ -584,7 +578,7 @@ class SALT:
          as 5, then we need at least 5 points to form a dense region.
         """
         dbscan = DBSCAN(eps)
-        dbscan.fit(self.X)
+        dbscan.fit(input_clustering)
         labels = dbscan.labels_
         # zeros_like returns an array of zeros with the same shape and type as a given array,
         # dtype will overrides the data type of the result.
@@ -608,15 +602,16 @@ class SALT:
                 self.X[x][i] = self.X[x][i] + gamma * (np.float64(core_samples[x_label][0:1][i]) +
                                                        np.float64(core_samples[x_label][1:2][i])) / 2
 
-    def lda_enrich(self, numclusters=10):
+    def lda_enrich(self, input_clustering, numclusters=10):
         """Enrich the training set with LDA.
         :param numclusters: Number of clusters
         :type numclusters: int
         """
         # X = np.int32(self.X)
-        self.X = np.array(self.X)
+        # self.X = np.array(self.X)
         model = lda.LDA(n_topics=numclusters, n_iter=1000, random_state=1)
-        model.fit(self.X.astype(np.intp))
+        # model.fit(self.X.astype(np.intp))
+        model.fit(input_clustering.astype(np.intp))
         topic_word = model.topic_word_
         # n_top_words = 8
         topics_distributions = []
@@ -638,6 +633,16 @@ class SALT:
             # topic_words_distributions = np.array(topic_dist)[np.argsort(topic_dist)][:-(n_top_words + 1):-1]
             # print('Topic {}: {}'.format(i, ' '.join(topic_words)))
             # print('Distributions for Topic {}: {}'.format(i, topic_words_distributions))
+
+    def prepare_input_clustering(self, include_unlabeled, unlabeled_dir, unlabeled_matrix):
+        if include_unlabeled is True:
+            if unlabeled_dir is not None:
+                unlabeled_matrix = self.prepare_unlabeled_data(unlabeled_dir)
+                unlabeled_matrix = np.array(unlabeled_matrix)
+            input_for_clustering = np.concatenate((self.X, unlabeled_matrix), axis=0)
+        else:
+            input_for_clustering = self.X
+        return input_for_clustering
 
 
 class Text:
