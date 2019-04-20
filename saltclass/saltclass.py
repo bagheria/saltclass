@@ -23,12 +23,12 @@ import os
 class SALT:
     """Classify short/long text to the predefined categories using clustering-based enrichment."""
     def __init__(self, x, y, vocabulary, **kwargs):
-        """Initialize the object with training matrix and setting.
+        """Initialize the object with training matrix and define setting.
         :param x: Data for training, a numerical document-term matrix
         :type x: list
-        :param y: Target binary values
+        :param y: Target values
         :type y: list
-        :param vocabulary: Name of variables in x
+        :param vocabulary: Variables (word features) in x
         :type vocabulary: list
         :param kwargs: Arbitrary keyword arguments: language='nl', vectorizer='count'
         :type kwargs: str
@@ -331,7 +331,7 @@ class SALT:
         self.clf.fit(self.X, self.y)
 
     def print_info(self):
-        """Print object's information."""
+        """Print object information."""
         print("classifier=", self.clf)
         print("language=", self.language)
         print("vectorizer=", self.vectorizer)
@@ -653,7 +653,7 @@ class Text:
 
 
 def initialize_dataset(train_path, word_vectorizer, language='nl'):
-    """Read documents from train data and vectorize the data.
+    """Read documents from train data and vectorize
     :param train_path: Directory for train data
     :type train_path: str
     :param word_vectorizer: Feature vectorizer
