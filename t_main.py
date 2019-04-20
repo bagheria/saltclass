@@ -5,8 +5,13 @@ train_X = [[10, 0, 0], [0, 20, 0], [4, 13, 5]]
 train_y = [0, 1, 1]
 vocab = ['statistics', 'medicine', 'crime']
 
-obj_new = saltclass.SALT(train_X, train_y, vocabulary=vocab, language='en')
-object_from_file = saltclass.SALT.data_from_dir(train_dir='D:/train/', language='en')
+object_from_df = saltclass.SALT(train_X, train_y, vocabulary=vocab, language='en')
+X = [[10, 12, 0], [14, 3, 52]]
+object_from_df.enrich(method='kmeans', include_unlabeled=True, unlabeled_matrix=X)
+
+object_from_df.enrich(method='kmeans', include_unlabeled=True, unlabeled_dir='D:/Data/unlabeled/')
+
+object_from_file = saltclass.SALT.data_from_dir(train_dir='D:/data/train/', language='en')
 obj_new = object_from_file
 obj_new.enrich()
 obj_new.train(classifier='svm')
