@@ -33,15 +33,24 @@ Sample Usage
 
 .. code:: python
 
-    >>> from saltclass import SALT
+Example 1:
+    >>> import saltclass
     >>> train_X = [[10, 0, 0], [0, 20, 0], [4, 13, 5]]
     >>> train_y = [0, 1, 1]
     >>> vocab = ['statistics', 'medicine', 'crime']
-    >>> object_from_df = SALT(train_X, train_y, vocabulary=vocab)
+    >>> object_from_df = saltclass.SALT(train_X, train_y, vocabulary=vocab, language='en')
+    >>> X = [[10, 12, 0], [14, 3, 52]]
+    >>> object_from_df.enrich(method='kmeans', include_unlabeled=True, unlabeled_matrix=X)
+    >>> object_from_df.train(classifier='KNN', k=5)
 
-    >>> object_from_file = SALT.data_from_dir(train_dir='D:/train/', language='en')
-    >>> object_from_df.enrich()
-    >>> object_from_df.train(classifier='svm')
+Example 2:
+    >>> object_from_df.enrich(method='lda', include_unlabeled=True, unlabeled_dir='/Data/unlabeled/')
+    >>> object_from_df.train(classifier='nn', alpha=0.01, hidden_layer_sizes=(50,), max_iter=10, solver='adam', activation='relu')
+
+Example 3:
+    >>> object_from_file = SALT.data_from_dir(train_dir='/train/', language='nl')
+    >>> object_from_df.enrich(include_unlabeled=False)
+    >>> object_from_df.train(classifier='svm', kernel='sigmoid')
     >>> object_from_df.print_info()
 
     >>> prediction = object_from_df.predict(data_file='second_test.txt')
