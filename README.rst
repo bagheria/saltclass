@@ -13,7 +13,7 @@ Short text classification can be defined simply as follows: Given a set of docum
 
 Figure 1 presents the semantic flowchart of the proposed intra-clustering method. In this framework, the clustering procedure is used as the heart of the approach, where it pumps cluster information throughout the body of text via the smoothing system, supplying text length and other information. This method is a hybrid technique, using benefits of different modules, including dictionary- and topic-based approaches, smoothing methods, and cluster information.
 
-![Architecture alt](https://github.com/bagheria/saltclass/blob/master/Architecture.png)
+.. image:: https://github.com/bagheria/saltclass/blob/master/Architecture.png
 
 Installation
 ------------
