@@ -11,7 +11,7 @@ The project was started in 2018 at the Department of Methodology & Statistics, U
 
 Short text classification can be defined simply as follows: Given a set of documents with representation D and a set of labels C, define a function F that will assign a value from the set of C to each document in D. Since short text is characterized by shortness in the length, and sparsity in the representation, we try to optimize D and F in such a way that results in better performance in managing and analyzing EHR text data.
 
-Figure 1 presents the semantic flowchart of the proposed intra-clustering method. In this framework, the clustering procedure is used as the heart of the approach, where it pumps cluster information throughout the body of text via the smoothing system, supplying text length and other information. This method is a hybrid technique, using benefits of different modules, including dictionary- and topic-based approaches, smoothing methods, and cluster information.
+Figure below presents the semantic flowchart of the proposed intra-clustering method. In this framework, the clustering procedure is used as the heart of the approach, where it pumps cluster information throughout the body of text via the smoothing system, supplying text length and other information. This method is a hybrid technique, using benefits of different modules, including dictionary- and topic-based approaches, smoothing methods, and cluster information.
 
 .. image:: https://github.com/bagheria/saltclass/blob/master/Architecture.png
 
@@ -23,8 +23,14 @@ To install via pip::
     $ pip install saltclass
     $ pip install --upgrade saltclass
 
+
+Methods overview
+------------
+.. image:: https://github.com/bagheria/saltclass/blob/master/methods.png
+
 Sample Usage
 ------------
+
 .. code:: python
 
     >>> from saltclass import SALT
