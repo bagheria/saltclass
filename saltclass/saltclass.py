@@ -95,7 +95,8 @@ class SALT:
         :rtype: SALT
         """
         if kwargs is not None and 'classifier' in kwargs:
-            if kwargs['classifier'] == 'SVM':
+            self.clf = MultinomialNB()
+            if kwargs['classifier'] in ('SVM', 'svm'):
                 if 'kernel' in kwargs:
                     if kwargs['kernel'] == 'poly':
                         if 'degree' in kwargs:
@@ -363,15 +364,11 @@ class SALT:
         """Transform the data with vectorizer."""
         if self.vectorizer == 'count':
             # can change to 'vocabulary=pickle.load(open("feature.pkl", "rb"))'
-            vec = CountVectorizer(vocabulary=self.vocabulary)
+            vec = CountVectorizer(vocabulary=self.vocabulary, ngram_range=(1, 2))
         else:
-            vec = TfidfVectorizer(vocabulary=self.vocabulary)
+            vec = TfidfVectorizer(vocabulary=self.vocabulary, ngram_range=(1, 2))
         x_test = vec.fit_transform(np.array(self.newdata))
         self.newdata = x_test.toarray()
-
-    # def predict(self, data_file, enrich=True):
-    #     # enrich test data
-    #     print()
 
     def binarize_y(self):
         """Make target binary."""
@@ -420,7 +417,7 @@ class SALT:
         plt.legend(loc="lower right")
         plt.show()
 
-    def enrich(self, method=None, num_clusters=2):
+    def enrich(self, method=None, num_clusters=2, include_unlabeled=False, unlabeled_dir=None, unlabeled_matrix=None):
         """
         Enrich the training set with the selected method
         :param method: clustering method: method='lda'
@@ -437,7 +434,7 @@ class SALT:
         :rtype: SALT
         """
         if method == 'kmeans':
-            self.kmeans_enrich(numclusters=num_clusters)
+            self.kmeans_enrich(num_clusters, include_unlabeled, unlabeled_dir, unlabeled_matrix)
         elif method == 'mbk':
             self.mbk_enrich(numclusters=num_clusters)
         elif method == 'lda':
@@ -453,13 +450,38 @@ class SALT:
         else:
             self.kmeans_enrich(numclusters=num_clusters)
 
-    def kmeans_enrich(self, numclusters=10):
+    def prepare_unlabeled_data(self, unlabeled_dir):
+        unlabeled_docs = []
+        if self.vectorizer == 'count':
+            vec = CountVectorizer(vocabulary=self.vocabulary, ngram_range=(1, 2))
+        else:
+            vec = TfidfVectorizer(vocabulary=self.vocabulary, ngram_range=(1, 2))
+
+        for filename in os.listdir(unlabeled_dir):
+            file_un = open(unlabeled_dir + filename, "r")
+            unlabeled_docs.append(file_un.read())
+            file_un.close()
+
+        x_unlabeled = vec.fit_transform(np.array([unlabeled_docs[i] for i in range(unlabeled_docs.__len__())]))
+        x_unlabeled = x_unlabeled.toarray()
+        return x_unlabeled
+
+    def kmeans_enrich(self, numclusters=2, include_unlabeled=False, unlabeled_dir=None, unlabeled_matrix=None):
         """Enrich the training set with kmeans algorithm.
         :param numclusters: Number of clusters
         :type numclusters: int
+        :param include_unlabeled: Test path to be included in enrichment
+        :type include_unlabeled: str
         """
+        if include_unlabeled is True:
+            if unlabeled_dir is not None:
+                unlabeled_matrix = self.prepare_unlabeled_data(unlabeled_dir)
+                unlabeled_matrix = np.array(unlabeled_matrix)
+            input_clustering = np.concatenate((self.X, unlabeled_matrix), axis=0)
+        else:
+            input_clustering = self.X
         km = KMeans(n_clusters=numclusters, init='k-means++', max_iter=300, n_init=1, verbose=0, random_state=3425)
-        km.fit(self.X)
+        km.fit(input_clustering)
         n_features = self.vocabulary.__len__()
         # feature_names = vec.get_feature_names() # self.vocabulary
         for x in range(self.X.__len__()):
@@ -644,19 +666,21 @@ def initialize_dataset(train_path, word_vectorizer, language='nl'):
         for filename in tqdm(os.listdir(path)):
             f = open(path + filename, "r")
             docs.append(Text(f.read(), categories[i]))
+            f.close()
     # add ngram
     # add grid_search
     if word_vectorizer == 'count':
-        vec = CountVectorizer(ngram_range=((1, 1), (1, 2)))
+        vec = CountVectorizer(ngram_range=(1, 2))
     else:
-        vec = TfidfVectorizer(ngram_range=((1, 1), (1, 2)))
+        vec = TfidfVectorizer(ngram_range=(1, 2))
     docs = spell_correction(docs, language)
     num_docs = docs.__len__()
     # arr = []
     # for i in range(num_docs):
     #      arr.append(docs[i].content)
     # x = vec.fit_transform(arr)
-    x = vec.fit_transform(np.array([docs[i].content for i in range(num_docs)]))
+    corpus = np.array([docs[i].content for i in range(num_docs)])
+    x = vec.fit_transform(corpus)
     x = x.toarray()
     categories = np.array([docs[i].category for i in range(num_docs)])
     vocab = vec.vocabulary_
