@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.model_selection import StratifiedKFold
+from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.neural_network import MLPClassifier
@@ -90,6 +91,7 @@ class SALT:
                                                     classifier='GaussianNB'
                                                     classifier='MultinomialNB'
                                                     classifier='GP'
+                                                    classifier='LR'
         :type kwargs: str, int
         :return: Object
         :rtype: SALT
@@ -125,6 +127,8 @@ class SALT:
                 self.clf = AdaBoostClassifier()
             elif kwargs['classifier'] == 'GP':
                 self.clf = GaussianProcessClassifier(1.0 * RBF(1.0))
+            elif kwargs['classifier'] == 'LR':
+                self.clf = LogisticRegression(random_state=0, solver='lbfgs', multi_class='multinomial')
             elif kwargs['classifier'] == 'NN':
                 if 'hidden_layer_sizes' in kwargs:
                     if 'max_iter' in kwargs:
@@ -474,23 +478,32 @@ class SALT:
         :param include_unlabeled: Test path to be included in enrichment
         :type include_unlabeled: str
         """
+        self.X = self.X.astype(float)
+        # [float(item) for item in self.X]
         km = KMeans(n_clusters=numclusters, init='k-means++', max_iter=300, n_init=1, verbose=0, random_state=3425)
         km.fit(input_clustering)
         n_features = self.vocabulary.__len__()
         # feature_names = vec.get_feature_names() # self.vocabulary
+
+        sum = 0
+        for x in range(self.X.__len__()):
+            sum = sum + np.count_nonzero(self.X[x])
+        mean_n_features_in_docs = sum / self.X.__len__()
+
         for x in range(self.X.__len__()):
             # check gamma, influence of length
-            gamma = np.count_nonzero(x) / n_features
+            gamma = mean_n_features_in_docs / np.count_nonzero(self.X[x])
             x_label = km.labels_[x]
             center_vector = km.cluster_centers_[x_label]
             for i in range(n_features):  # (for each word in the cluster center)
-                self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
+                self.X[x][i] = float(self.X[x][i] + gamma * center_vector[i])
 
     def mbk_enrich(self, input_clustering, numclusters=10):
         """Enrich the training set with MiniBatchKMeans clustering algorithm.
         :param numclusters: Number of clusters
         :type numclusters: int
         """
+        self.X.astype(float)
         mbk = MiniBatchKMeans(init='k-means++', n_clusters=numclusters, batch_size=100,
                               n_init=10, max_no_improvement=10, verbose=0,
                               random_state=0)
@@ -498,8 +511,15 @@ class SALT:
         labels = mbk.labels_
         cluster_centers = mbk.cluster_centers_
         n_features = self.vocabulary.__len__()
+
+        sum = 0
         for x in range(self.X.__len__()):
-            gamma = np.count_nonzero(x) / n_features
+            sum = sum + np.count_nonzero(self.X[x])
+        mean_n_features_in_docs = sum / self.X.__len__()
+
+        for x in range(self.X.__len__()):
+            # check gamma, influence of length
+            gamma = mean_n_features_in_docs / np.count_nonzero(self.X[x])
             x_label = labels[x]
             center_vector = cluster_centers[x_label]
             for i in range(n_features):
@@ -523,8 +543,15 @@ class SALT:
         labels = birch.labels_
         cluster_centers = birch.subcluster_centers_
         n_features = self.vocabulary.__len__()
+
+        sum = 0
         for x in range(self.X.__len__()):
-            gamma = np.count_nonzero(x) / n_features
+            sum = sum + np.count_nonzero(self.X[x])
+        mean_n_features_in_docs = sum / self.X.__len__()
+
+        for x in range(self.X.__len__()):
+            # check gamma, influence of length
+            gamma = mean_n_features_in_docs / np.count_nonzero(self.X[x])
             x_label = labels[x]
             center_vector = cluster_centers[x_label]
             for i in range(n_features):
@@ -540,8 +567,15 @@ class SALT:
         labels = gmm.predict(self.X)
         cluster_centers = gmm.means_
         n_features = self.vocabulary.__len__()
+
+        sum = 0
         for x in range(self.X.__len__()):
-            gamma = np.count_nonzero(x) / n_features
+            sum = sum + np.count_nonzero(self.X[x])
+        mean_n_features_in_docs = sum / self.X.__len__()
+
+        for x in range(self.X.__len__()):
+            # check gamma, influence of length
+            gamma = mean_n_features_in_docs / np.count_nonzero(self.X[x])
             x_label = labels[x]
             center_vector = cluster_centers[x_label]
             for i in range(n_features):
@@ -558,8 +592,15 @@ class SALT:
         # labels_unique = np.unique(labels)
         # n_clusters_ = len(labels_unique)
         n_features = self.vocabulary.__len__()
+
+        sum = 0
         for x in range(self.X.__len__()):
-            gamma = np.count_nonzero(x) / n_features
+            sum = sum + np.count_nonzero(self.X[x])
+        mean_n_features_in_docs = sum / self.X.__len__()
+
+        for x in range(self.X.__len__()):
+            # check gamma, influence of length
+            gamma = mean_n_features_in_docs / np.count_nonzero(self.X[x])
             x_label = labels[x]
             center_vector = cluster_centers[x_label]
             for i in range(n_features):
@@ -593,8 +634,15 @@ class SALT:
         for k in unique_labels:
             class_member_mask = (labels == k)
             core_samples.append(self.X[class_member_mask & core_samples_mask])
+
+        sum = 0
         for x in range(self.X.__len__()):
-            gamma = np.count_nonzero(x) / n_features
+            sum = sum + np.count_nonzero(self.X[x])
+        mean_n_features_in_docs = sum / self.X.__len__()
+
+        for x in range(self.X.__len__()):
+            # check gamma, influence of length
+            gamma = mean_n_features_in_docs / np.count_nonzero(self.X[x])
             x_label = labels[x]
             if x_label == -1:
                 continue
@@ -617,11 +665,17 @@ class SALT:
         topics_distributions = []
         train_set = []
         n_features = self.vocabulary.__len__()
+
+        sum = 0
+        for x in range(self.X.__len__()):
+            sum = sum + np.count_nonzero(self.X[x])
+        mean_n_features_in_docs = sum / self.X.__len__()
+
         for x in range(self.X.__len__()):
             if np.count_nonzero(self.X[x]) == 0:
                 gamma = 0
             else:
-                gamma = np.count_nonzero(self.X[x]) / n_features
+                gamma = mean_n_features_in_docs / np.count_nonzero(self.X[x])
             doc_topic_dist = model.doc_topic_[x]
             for i in range(n_features):
                 lda_ev = 0
@@ -675,7 +729,8 @@ def initialize_dataset(train_path, word_vectorizer, language='nl'):
     # add ngram
     # add grid_search
     if word_vectorizer == 'count':
-        vec = CountVectorizer(ngram_range=(1, 2))
+        # vec = CountVectorizer(ngram_range=(1, 2))
+        vec = CountVectorizer()
     else:
         vec = TfidfVectorizer(ngram_range=(1, 2))
     docs = spell_correction(docs, language)
