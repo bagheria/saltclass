@@ -6,7 +6,7 @@ def readme():
         return f.read()
 
 setup(name='saltclass',
-      version='0.1.2',
+      version='0.2',
       description='Short and Long Text Classifier using clustering-based enrichment',
       long_description=readme(),
       keywords='short text classification',
