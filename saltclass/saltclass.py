@@ -2,6 +2,7 @@ from sklearn.cluster import MeanShift, estimate_bandwidth, MiniBatchKMeans, KMea
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.gaussian_process import GaussianProcessClassifier
+from nltk.tokenize.treebank import TreebankWordDetokenizer
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.model_selection import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
@@ -10,7 +11,9 @@ from sklearn.gaussian_process.kernels import RBF
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import roc_curve, auc
+from nltk.corpus import stopwords
 import matplotlib.pyplot as plt
+from nltk import word_tokenize
 from sklearn.svm import SVC
 from sklearn import mixture
 from scipy import interp
@@ -706,7 +709,7 @@ class Text:
         self.category = category
 
 
-def initialize_dataset(train_path, word_vectorizer, language='nl'):
+def initialize_dataset(train_path, word_vectorizer, language='nl', prep=False):
     """Read documents from train data and vectorize
     :param train_path: Directory for train data
     :type train_path: str
@@ -733,9 +736,21 @@ def initialize_dataset(train_path, word_vectorizer, language='nl'):
         vec = CountVectorizer()
     else:
         vec = TfidfVectorizer(ngram_range=(1, 2))
-    docs = spell_correction(docs, language)
+
     num_docs = docs.__len__()
-    # arr = []
+    if prep == True:
+        if language == 'nl':
+            stop_list = set(stopwords.words('dutch'))
+            for d in range(num_docs):
+                docs[d].content = \
+                    TreebankWordDetokenizer().detokenize([i for i in word_tokenize(docs[d].content) if i not in stop_list])
+            # docs = spell_correction(docs, language) # I removed this line, because language-check depends on JAVA 8.
+        else:
+            stop_list = set(stopwords.words('english'))
+            for d in range(num_docs):
+                docs[d].content = \
+                    TreebankWordDetokenizer().detokenize([i for i in word_tokenize(docs[d].content) if i not in stop_list])
+
     # for i in range(num_docs):
     #      arr.append(docs[i].content)
     # x = vec.fit_transform(arr)
