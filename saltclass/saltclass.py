@@ -717,6 +717,8 @@ def initialize_dataset(train_path, word_vectorizer, language='nl', prep=False):
     :type word_vectorizer: str
     :param language: Language of text
     :type language: str
+    :param prep: pre-processing
+    :type prep: bool
     :return: Transformed matrix, List of categories, and Vocabulary of data
     :rtype: list
     """
