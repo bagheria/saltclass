@@ -5,22 +5,19 @@ import numpy as np
 train_X = np.array([[10, 0, 0], [0, 20, 0], [4, 13, 5]])
 train_y = np.array([0, 1, 1])
 vocab = ['statistics', 'medicine', 'crime']
-
 object_from_df = saltclass.SALT(train_X, train_y, vocabulary=vocab, language='en')
 X = np.array([[10, 12, 0], [14, 3, 52]])
 object_from_df.enrich(method='kmeans', include_unlabeled=True, unlabeled_matrix=X)
-
 object_from_df.enrich(method='kmeans', include_unlabeled=True, unlabeled_dir='D:/Data/unlabeled/')
 
 object_from_file = saltclass.SALT.data_from_dir(train_dir='D:/data/train2/', language='en')
-obj_new = object_from_file
-obj_new.enrich()
-obj_new.train(classifier='svm')
-obj_new.print_info()
-prediction = obj_new.predict(data_file='second_test.txt')
-print(obj_new.vocabulary)
-print(obj_new.newdata)
-print([k for (k, v) in obj_new.vocabulary.items() if obj_new.newdata[0][v] != 0])
+object_from_file.enrich(method='lda')
+object_from_file.train(classifier='svm')
+object_from_file.print_info()
+prediction = object_from_file.predict(data_file='second_test.txt')
+print(object_from_file.vocabulary)
+print(object_from_file.newdata)
+print([k for (k, v) in object_from_file.vocabulary.items() if object_from_file.newdata[0][v] != 0])
 print(prediction)
 
 
