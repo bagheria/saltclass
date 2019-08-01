@@ -526,7 +526,7 @@ class SALT:
             x_label = labels[x]
             center_vector = cluster_centers[x_label]
             for i in range(n_features):
-                self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
+                self.X[x][i] = float(self.X[x][i] + gamma * center_vector[i])
 
     def birch_enrich(self, input_clustering, numclusters=10, threshold=1.7):
         """Enrich the training set with BIRCH clustering algorithm.
@@ -541,6 +541,7 @@ class SALT:
         should be lesser than the threshold.
         :type threshold: float
         """
+        self.X = self.X.astype(float)
         birch = Birch(threshold=threshold, n_clusters=numclusters)
         birch.fit(input_clustering)
         labels = birch.labels_
@@ -565,6 +566,7 @@ class SALT:
         :param numclusters: Number of clusters
         :type numclusters: int
         """
+        self.X = self.X.astype(float)
         gmm = mixture.GaussianMixture(n_components=numclusters, covariance_type='full')
         gmm.fit(input_clustering)
         labels = gmm.predict(self.X)
@@ -582,11 +584,12 @@ class SALT:
             x_label = labels[x]
             center_vector = cluster_centers[x_label]
             for i in range(n_features):
-                self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
+                self.X[x][i] = float(self.X[x][i] + gamma * center_vector[i])
 
     def ms_enrich(self, input_clustering):
         """Enrich the training set with MeanShift clustering algorithm."""
         # bandwidth can be automatically detected using
+        self.X = self.X.astype(float)
         bandwidth = estimate_bandwidth(self.X, quantile=0.2, n_samples=500)
         ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
         ms.fit(input_clustering)
@@ -607,7 +610,7 @@ class SALT:
             x_label = labels[x]
             center_vector = cluster_centers[x_label]
             for i in range(n_features):
-                self.X[x][i] = self.X[x][i] + gamma * center_vector[i]
+                self.X[x][i] = float(self.X[x][i] + gamma * center_vector[i])
 
     def dbscan_enrich(self, input_clustering, eps=1.36):
         """Enrich the training set with DBSCAN clustering algorithm.
@@ -621,6 +624,7 @@ class SALT:
         # minPoints: the minimum number of points to form a dense region. For example, if we set the minPoints parameter
          as 5, then we need at least 5 points to form a dense region.
         """
+        self.X = self.X.astype(float)
         dbscan = DBSCAN(eps)
         dbscan.fit(input_clustering)
         labels = dbscan.labels_
@@ -650,14 +654,15 @@ class SALT:
             if x_label == -1:
                 continue
             for i in range(n_features):
-                self.X[x][i] = self.X[x][i] + gamma * (np.float64(core_samples[x_label][0:1][i]) +
-                                                       np.float64(core_samples[x_label][1:2][i])) / 2
+                self.X[x][i] = float(self.X[x][i] + gamma * (np.float64(core_samples[x_label][0:1][i]) +
+                                                       np.float64(core_samples[x_label][1:2][i])) / 2)
 
     def lda_enrich(self, input_clustering, numclusters=10):
         """Enrich the training set with LDA.
         :param numclusters: Number of clusters
         :type numclusters: int
         """
+        self.X = self.X.astype(float)
         # X = np.int32(self.X)
         # self.X = np.array(self.X)
         model = lda.LDA(n_topics=numclusters, n_iter=1000, random_state=1)
@@ -670,8 +675,8 @@ class SALT:
         n_features = self.vocabulary.__len__()
 
         sum = 0
-        for x in range(self.X.__len__()):
-            sum = sum + np.count_nonzero(self.X[x])
+        for i in range(self.X.__len__()):
+            sum = sum + np.count_nonzero(self.X[i])
         mean_n_features_in_docs = sum / self.X.__len__()
 
         for x in range(self.X.__len__()):
@@ -684,7 +689,7 @@ class SALT:
                 lda_ev = 0
                 for k, topic_dist in enumerate(topic_word):
                     lda_ev = lda_ev + doc_topic_dist[k] * topic_dist[i]
-                self.X[x][i] = self.X[x][i] + gamma * lda_ev
+                self.X[x][i] = float(self.X[x][i] + gamma * lda_ev)
 
             # topic_words = np.array(vocab)[np.argsort(topic_dist)][:-(n_top_words + 1):-1]
             # topic_words_distributions = np.array(topic_dist)[np.argsort(topic_dist)][:-(n_top_words + 1):-1]
