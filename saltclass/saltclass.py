@@ -665,7 +665,6 @@ class SALT:
         self.X = self.X.astype(float)
         model = lda.LDA(n_topics=numclusters, n_iter=1000, random_state=1)
         model.fit(input_clustering.astype(np.intp))
-        topic_word = model.topic_word_
         # topics_distributions = []
         # train_set = []
         n_features = self.vocabulary.__len__()
@@ -683,7 +682,7 @@ class SALT:
             doc_topic_dist = model.doc_topic_[x]
             for i in range(n_features):
                 lda_ev = 0
-                for k, topic_dist in enumerate(topic_word):
+                for k, topic_dist in enumerate(model.topic_word_):
                     lda_ev = lda_ev + doc_topic_dist[k] * topic_dist[i]
                 self.X[x][i] = float(self.X[x][i] + gamma * lda_ev)
 
