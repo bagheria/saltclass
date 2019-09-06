@@ -663,15 +663,11 @@ class SALT:
         :type numclusters: int
         """
         self.X = self.X.astype(float)
-        # X = np.int32(self.X)
-        # self.X = np.array(self.X)
         model = lda.LDA(n_topics=numclusters, n_iter=1000, random_state=1)
-        # model.fit(self.X.astype(np.intp))
         model.fit(input_clustering.astype(np.intp))
         topic_word = model.topic_word_
-        # n_top_words = 8
-        topics_distributions = []
-        train_set = []
+        # topics_distributions = []
+        # train_set = []
         n_features = self.vocabulary.__len__()
 
         sum = 0
@@ -691,10 +687,6 @@ class SALT:
                     lda_ev = lda_ev + doc_topic_dist[k] * topic_dist[i]
                 self.X[x][i] = float(self.X[x][i] + gamma * lda_ev)
 
-            # topic_words = np.array(vocab)[np.argsort(topic_dist)][:-(n_top_words + 1):-1]
-            # topic_words_distributions = np.array(topic_dist)[np.argsort(topic_dist)][:-(n_top_words + 1):-1]
-            # print('Topic {}: {}'.format(i, ' '.join(topic_words)))
-            # print('Distributions for Topic {}: {}'.format(i, topic_words_distributions))
 
     def prepare_input_clustering(self, include_unlabeled, unlabeled_dir, unlabeled_matrix):
         if include_unlabeled is True:
