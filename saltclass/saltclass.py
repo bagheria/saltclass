@@ -1,9 +1,11 @@
 from sklearn.cluster import MeanShift, estimate_bandwidth, MiniBatchKMeans, KMeans, Birch, DBSCAN
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.metrics import accuracy_score, classification_report
 from sklearn.gaussian_process import GaussianProcessClassifier
 from nltk.tokenize.treebank import TreebankWordDetokenizer
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
+from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
@@ -16,6 +18,7 @@ import matplotlib.pyplot as plt
 from nltk import word_tokenize
 from sklearn.svm import SVC
 from sklearn import mixture
+from scipy import spatial
 from scipy import interp
 from tqdm import tqdm
 import language_check
@@ -111,7 +114,7 @@ class SALT:
                     elif kwargs['kernel'] == 'sigmoid':
                         self.clf = SVC(kernel='sigmoid', probability=True)
                     else:
-                        # kwargs['kernel'] is 'lin'
+                        # kwargs['kernel'] is 'rbf'
                         if 'gamma' in kwargs:
                             self.clf = SVC(gamma=kwargs['gamma'], C=1, probability=True)
                         else:
@@ -455,6 +458,8 @@ class SALT:
             self.gmm_enrich(input_clustering, num_clusters)
         elif method == 'ms':
             self.ms_enrich(input_clustering)
+        elif method == 'sim':
+            self.sim_enrich(input_clustering, num_clusters)
         else:
             self.kmeans_enrich(input_clustering, num_clusters)
 
@@ -482,11 +487,9 @@ class SALT:
         :type include_unlabeled: str
         """
         self.X = self.X.astype(float)
-        # [float(item) for item in self.X]
         km = KMeans(n_clusters=numclusters, init='k-means++', max_iter=300, n_init=1, verbose=0, random_state=3425)
         km.fit(input_clustering)
         n_features = self.vocabulary.__len__()
-        # feature_names = vec.get_feature_names() # self.vocabulary
 
         sum = 0
         for x in range(self.X.__len__()):
@@ -657,6 +660,38 @@ class SALT:
                 self.X[x][i] = float(self.X[x][i] + gamma * (np.float64(core_samples[x_label][0:1][i]) +
                                                        np.float64(core_samples[x_label][1:2][i])) / 2)
 
+    def sim_enrich(self, input_clustering, numclusters=10):
+        """Enrich the training set with LDA similarity.
+        :param numclusters: Number of clusters
+        :type numclusters: int
+        """
+        self.X = self.X.astype(float)
+        model = lda.LDA(n_topics=numclusters, n_iter=1000, random_state=1)
+        model.fit(input_clustering.astype(np.intp))
+        newX = []
+        for x in range(self.X.__len__()):
+            sim = []
+            for topic_dist in enumerate(model.topic_word_):
+                result = 1 - spatial.distance.cosine(self.X[x], topic_dist[1])
+                sim.append(result)
+
+            newX.append(np.append(self.X[x], sim))
+
+        newX = np.nan_to_num(newX)
+        X_train, X_test, y_train, y_test = train_test_split(newX, self.y, test_size=0.20, random_state=42)
+        clf = SVC(kernel='linear')
+        clf.fit(X_train, y_train)
+        pr = clf.predict(X_test)
+        accuracy = accuracy_score(pr, y_test)
+        cr = classification_report(pr, y_test)
+        with open('crest.txt', 'w') as f:
+            f.write("accuracy")
+            f.write(str(accuracy))
+            f.write("classification reports")
+            f.write(cr)
+        # -------------
+
+
     def lda_enrich(self, input_clustering, numclusters=10):
         """Enrich the training set with LDA.
         :param numclusters: Number of clusters
@@ -664,7 +699,8 @@ class SALT:
         """
         self.X = self.X.astype(float)
         model = lda.LDA(n_topics=numclusters, n_iter=1000, random_state=1)
-        model.fit(input_clustering.astype(np.intp))
+        # model.fit(input_clustering.astype(np.intp))
+        model.fit((np.ceil(input_clustering)).astype(np.intp))
         # topics_distributions = []
         # train_set = []
         n_features = self.vocabulary.__len__()
@@ -685,7 +721,6 @@ class SALT:
                 for k, topic_dist in enumerate(model.topic_word_):
                     lda_ev = lda_ev + doc_topic_dist[k] * topic_dist[i]
                 self.X[x][i] = float(self.X[x][i] + gamma * lda_ev)
-
 
     def prepare_input_clustering(self, include_unlabeled, unlabeled_dir, unlabeled_matrix):
         if include_unlabeled is True:
@@ -727,16 +762,41 @@ def initialize_dataset(train_path, word_vectorizer, language='nl', prep=False):
             f = open(path + filename, "r")
             docs.append(Text(f.read(), categories[i]))
             f.close()
+
+    import csv
+    with open('data_temp.csv', mode='w', newline='') as data_file:
+        csv_writer = csv.writer(data_file)
+        for dd in range(docs.__len__()):
+            if docs[dd].content != '' and docs[dd].category != '':
+                csv_writer.writerow([docs[dd].content, docs[dd].category])
+    data_file.close()
+
     # add ngram
     # add grid_search
     if word_vectorizer == 'count':
         # vec = CountVectorizer(ngram_range=(1, 2))
         vec = CountVectorizer()
     else:
-        vec = TfidfVectorizer(ngram_range=(1, 2))
+        vec = TfidfVectorizer()
 
     num_docs = docs.__len__()
-    if prep == True:
+
+    sum1 = 0
+    sum2 = 0
+    sum3 = 0
+    ns2 = 0
+    ns3 = 0
+    for d in range(num_docs):
+        wt = word_tokenize(docs[d].content)
+        sum1 += len(wt)
+        if docs[d].category == 'Medical history':
+            sum2 += len(wt)
+            ns2 += 1
+        else:
+            sum3 += len(wt)
+            ns3 += 1
+
+    if prep is True:
         if language == 'nl':
             stop_list = set(stopwords.words('dutch'))
             for d in range(num_docs):
